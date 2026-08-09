@@ -467,17 +467,17 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   <button class="dub-btn play" id="cloneSaveBtn" onclick="saveCloneVoice()" style="width:100%;margin:4px 0" disabled>💾 保存克隆音色</button>
   <div class="clone-voice-list" id="cloneVoiceList"></div>
 </div>
-<div class="dub-panel" id="dubPanel"><div class="dub-header"><h3>🎙️ 配音工作台</h3><button class="btn btn-sm" onclick="toggleDubbing()">✕</button></div><textarea id="dubText" placeholder="输入要配音的文字…" rows="6"></textarea><div class="s-row" style="margin:8px 0"><label>音色</label><select id="dubVoice"><optgroup label="🎭 童声（6~15岁）"><option value="longhuhu_v3">龙呼呼（天真烂漫女童）</option>
-<option value="longpaopao_v3">龙泡泡（飞天泡泡音）</option>
-<option value="longjielidou_v3">龙杰力豆（阳光顽皮男）</option>
-<option value="longxian_v3">龙仙（豪放可爱女）</option>
-<option value="longling_v3">龙铃（稚气呆板女）</option>
-<option value="longshanshan_v3">龙闪闪（戏剧化童声）</option>
-<option value="longniuniu_v3">龙牛牛（阳光男童声）</option></optgroup><optgroup label="🧒 少年（12~18岁）"><option value="longwangwang_v3">龙汪汪（台湾少年音）</option>
-<option value="longfeifei_v3">龙菲菲（甜美娇气女）</option></optgroup><optgroup label="👩 青年·女声（18~35岁）"><option value="longanhuan">龙安焕（欢脱元气女·推荐）</option>
-<option value="longanhuan_v3">龙安焕V3（方言元气女）</option>
-<option value="longhua_v3">龙华（元气甜美女）</option>
-<option value="longantai_v3">龙安台（嗲甜台湾女）</option>
+<div class="dub-panel" id="dubPanel"><div class="dub-header"><h3>🎙️ 配音工作台</h3><button class="btn btn-sm" onclick="toggleDubbing()">✕</button></div><textarea id="dubText" placeholder="输入要配音的文字…" rows="6"></textarea><div class="s-row" style="margin:8px 0"><label>音色</label><select id="dubVoice"><optgroup label="🎭 童声（6~15岁）"><option value="longhuohuo_v3">龙火火（桀骜不驯男童）</option>
+<option value="longhuhu_v3">龙呼呼（天真烂漫女童）</option>
+<option value="longwangwang_v3">龙汪汪（台湾少年音）</option>
+<option value="longfeifei_v3">龙菲菲（甜美娇气女）</option>
+<option value="longpaopao">龙泡泡（飞天泡泡音）</option>
+<option value="longshanshan">龙闪闪（戏剧化童声）</option>
+<option value="longniuniu">龙牛牛（阳光男童声）</option>
+<option value="longjielidou_v2">龙杰力豆（阳光顽皮男）</option>
+<option value="longling_v2">龙铃（稚气呆板女）</option>
+<option value="longxian_v2">龙仙（豪放可爱女）</option>
+<option value="longke_v2">龙可（懵懂乖乖女）</option></optgroup><optgroup label="👩 青年·女声（18~35岁）"><option value="longanhuan">龙安欢（欢脱元气女·推荐）</option>
 <option value="longanqin_v3">龙安亲（亲和活泼女）</option>
 <option value="longanling_v3">龙安灵（思维灵动女）</option>
 <option value="longanya_v3">龙安雅（高雅气质女）</option>
@@ -488,43 +488,29 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <option value="longyingxiao_v3">龙应笑（清甜推销女）</option>
 <option value="longyingtao_v3">龙应桃（温柔淡定女）</option>
 <option value="longanxuan_v3">龙安宣（经典直播女）</option>
-<option value="longyingjing_v3">龙应静（低调冷静女）</option>
-<option value="longyingling_v3">龙应聆（温和共情女）</option>
-<option value="longxiaochun_v3">龙小淳（知性积极女）</option>
-<option value="longxiaoxia_v3">龙小夏（沉稳权威女）</option>
-<option value="longyumi_v3">YUMI（正经青年女）</option>
+<option value="longdaiyu_v3">龙黛玉（娇率才女音）</option>
 <option value="loongbella_v3">Bella3.0（精准干练女）</option>
-<option value="longanmin_v3">龙安闽（清纯萝莉女）</option></optgroup><optgroup label="👨 青年·男声（18~35岁）"><option value="longanyang">龙安洋（阳光大男孩）</option>
-<option value="longcheng_v3">龙橙（智慧青年男）</option>
+<option value="longyumi_v2">YUMI（正经青年女）</option>
+<option value="longxiaoxia_v2">龙小夏（沉稳权威女）</option>
+<option value="longxiaochun_v2">龙小淳（知性积极女）</option>
+<option value="longanpei">龙安培（青少年教师女）</option></optgroup><optgroup label="👨 青年·男声（18~35岁）"><option value="longanyang">龙安洋（阳光大男孩）</option>
 <option value="longanshuo_v3">龙安朔（干净清爽男）</option>
 <option value="longanzhi_v3">龙安智（睿智轻熟男）</option>
 <option value="longanyun_v3">龙安昀（居家暖男）</option>
 <option value="longanlang_v3">龙安朗（清爽利落男）</option>
 <option value="longyichen_v3">龙逸尘（洒脱活力男）</option>
-<option value="longyingxun_v3">龙应询（年轻青涩男）</option>
-<option value="longfei_v3">龙飞（热血磁性男）</option></optgroup><optgroup label="👴 中年·老年"><option value="longlaobo_v3">龙老伯（沧桑岁月爷）</option>
+<option value="longyingxun_v3">龙应询（年轻青涩男）</option></optgroup><optgroup label="👴 中年·老年"><option value="longlaobo_v3">龙老伯（沧桑岁月爷）</option>
 <option value="longlaoyi_v3">龙老姨（烟火从容阿姨）</option></optgroup><optgroup label="🎪 特殊角色"><option value="longjiqi_v3">龙机器（呆萌机器人）</option>
-<option value="longhouge_v3">龙猴哥（经典猴哥）</option></optgroup><optgroup label="🎭 反派·古风·太监"><option value="longhouge_v3">龙公公（尖细太监音）</option>
-<option value="longgaoseng">龙高僧（得道高僧音）</option>
+<option value="longhouge_v3">龙猴哥（经典猴哥）</option>
+<option value="longchuanshu_v3">龙川叔（油腻搞笑叔）</option>
 <option value="longjixin">龙机心（毒舌心机女）</option>
-<option value="longgangmei">龙港妹（TVB港剧女）</option>
-<option value="longdaiyu_v3">龙黛玉（娇率才女音）</option>
-<option value="longanwen_v3">龙安温（冷艳反派女）</option>
-<option value="longanyang">龙安洋（邪魅公子音）</option>
-<option value="longanling_v3">龙安灵（阴谋军师女）</option></optgroup><optgroup label="🗣️ 方言·专用音色"><option value="longanyue_v3">龙安粤（欢脱粤语男）</option>
-<option value="longjiaxin_v3">龙嘉欣（优雅粤语女）</option>
-<option value="longjiayi_v3">龙嘉怡（知性粤语女）</option>
-<option value="longlaotie_v3">龙老铁（东北直率男）</option>
+<option value="longgangmei">龙港妹（TVB港剧女）</option></optgroup><optgroup label="🗣️ 方言·专用音色"><option value="longanyue_v3">龙安粤（欢脱粤语男）</option>
 <option value="longshange_v3">龙陕哥（原味陕北男）</option>
-<option value="longanmin_v3">龙安闽（清纯闽南萝莉）</option></optgroup><optgroup label="🗣️ 方言·龙安欢指令切换"><option value="longanhuan_v3|四川话">四川话（龙安欢·元气女）</option>
-<option value="longanhuan_v3|河南话">河南话（龙安欢·元气女）</option>
-<option value="longanhuan_v3|湖南话">湖南话（龙安欢·元气女）</option>
-<option value="longanhuan_v3|山东话">山东话（龙安欢·元气女）</option>
-<option value="longanhuan_v3|安徽话">安徽话（龙安欢·元气女）</option></optgroup><optgroup label="🗣️ 方言·男生实验"><option value="longcheng_v3|四川话">四川话（龙橙·智慧男）</option>
-<option value="longcheng_v3|河南话">河南话（龙橙·智慧男）</option>
-<option value="longcheng_v3|湖南话">湖南话（龙橙·智慧男）</option>
-<option value="longcheng_v3|山东话">山东话（龙橙·智慧男）</option>
-<option value="longcheng_v3|安徽话">安徽话（龙橙·智慧男）</option></optgroup></select></div><div class="s-row" style="margin:8px 0"><label>语速</label><input type="range" id="dubSpeed" min="0.5" max="2.0" step="0.1" value="1.0" style="flex:1"><span id="dubSpeedVal">1.0x</span></div><div class="s-row" style="margin:8px 0"><label>音量</label><input type="range" id="dubVolume" min="0.1" max="1.0" step="0.1" value="0.8" style="flex:1"><span id="dubVolumeVal">80%</span></div><button class="btn btn-primary" id="dubGenerateBtn" onclick="generateDub()" style="width:100%;margin-top:8px">🎙️ 生成配音</button><div id="dubStatus" style="margin-top:8px;text-align:center;font-size:13px;color:var(--sub)"></div></div>
+<option value="longanmin_v3">龙安闽（清纯闽南女）</option></optgroup><optgroup label="🗣️ 方言·龙安欢指令切换"><option value="longanhuan|四川话">四川话（龙安欢·元气女）</option>
+<option value="longanhuan|河南话">河南话（龙安欢·元气女）</option>
+<option value="longanhuan|湖南话">湖南话（龙安欢·元气女）</option>
+<option value="longanhuan|山东话">山东话（龙安欢·元气女）</option>
+<option value="longanhuan|安徽话">安徽话（龙安欢·元气女）</option></optgroup></select></div><div class="s-row" style="margin:8px 0"><label>语速</label><input type="range" id="dubSpeed" min="0.5" max="2.0" step="0.1" value="1.0" style="flex:1"><span id="dubSpeedVal">1.0x</span></div><div class="s-row" style="margin:8px 0"><label>音量</label><input type="range" id="dubVolume" min="0.1" max="1.0" step="0.1" value="0.8" style="flex:1"><span id="dubVolumeVal">80%</span></div><button class="btn btn-primary" id="dubGenerateBtn" onclick="generateDub()" style="width:100%;margin-top:8px">🎙️ 生成配音</button><div id="dubStatus" style="margin-top:8px;text-align:center;font-size:13px;color:var(--sub)"></div></div>
   <div class="chat-model-panel" id="chatModelPanel" onclick="event.stopPropagation()">
     <div class="chat-model-panel-header"><span class="chat-model-panel-title">🧠 选择聊天模型</span><button class="chat-model-panel-close" onclick="closeChatModelPanel()">✕</button></div>
     <div id="chatModelList"></div>
@@ -5227,8 +5213,8 @@ function generateDub() {
     var btn = document.getElementById('dubGenerateBtn');
     if (btn) btn.disabled = true;
     var inputData = { text: text, voice: voice };
-    // 只有 longanhuan_v3 支持方言指令，其他音色不支持
-    if (dialect && voice === 'longanhuan_v3') { inputData.instruction = '请用' + dialect + '表达。'; }
+    // 只有 longanhuan 支持方言指令（cosyvoice-v3-flash），其他音色不支持
+    if (dialect && voice === 'longanhuan') { inputData.instruction = '请用' + dialect + '表达。'; }
     // 自动选择模型: _v3后缀用v3-flash，否则用v2
     var model = (voice.indexOf('_v3')!==-1 || voice==='longanyang' || voice==='longanhuan') ? 'cosyvoice-v3-flash' : 'cosyvoice-v2';
     var payload = { model: model, input: inputData, parameters: { format: 'mp3', sample_rate: 24000, speech_rate: speed, volume: volume } };
