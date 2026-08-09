@@ -3568,7 +3568,13 @@ function _updateReadMenu(idx,state){
   var msgEl=document.querySelector('[data-midx="'+idx+'"] .bubble');
   if(!msgEl)return;
   var menu=msgEl.querySelector('.read-menu');
-  if(!menu)return; // 菜单未打开，不更新
+  if(!menu){
+    // 菜单未打开，自动创建
+    menu=document.createElement('div');
+    menu.className='read-menu';
+    menu.style.cssText='display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08);flex-wrap:wrap';
+    msgEl.appendChild(menu);
+  }
   if(state==='playing'){
     menu.innerHTML='<button class="read-mi pause" onclick="event.stopPropagation();pauseReading()">⏸ 暂停</button>'+
       '<button class="read-mi stop" onclick="event.stopPropagation();stopReading()">⬛ 停止</button>'+
