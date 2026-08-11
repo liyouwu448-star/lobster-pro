@@ -2576,69 +2576,49 @@ function buildSmartSysPrompt(userText){
 
   var extra='';
 
+  // 精简上下文：限制记忆数量，减少token开销
   if(memories.length){
-    extra+='\n\n【L2 知识库记忆】用户让你记住的信息：\n';
-    memories.forEach(function(m){extra+='- '+m.text+'\n'});
+    extra+='\n【记忆】';
+    memories.slice(-5).forEach(function(m){extra+='- '+m.text+'\n'});
   }
 
   var pk=Object.keys(userProfile);
   if(pk.length){
-    extra+='\n【L3 用户画像】\n';
-    pk.forEach(function(k){extra+=k+'：'+userProfile[k]+'\n'});
+    extra+='\n【画像】';
+    pk.slice(0,5).forEach(function(k){extra+=k+'：'+userProfile[k]+'；'});
   }
 
-  var currentEmotion=null;
   if(emotionHistory.length>0){
-    currentEmotion=emotionHistory[emotionHistory.length-1].emotion;
-    extra+='\n【L4 情感记忆】用户最近情绪状态：'+currentEmotion;
-    extra+='\n'+getEmotionStyleHint(currentEmotion);
+    var currentEmotion=emotionHistory[emotionHistory.length-1].emotion;
+    extra+='\n【情绪】'+currentEmotion;
   }
 
+  // 精简经验教训：只保留最近1条
   if(experienceMem.failures.length>0){
-    var recentFails=experienceMem.failures.slice(-3);
-    extra+='\n【L5 经验教训】请避免以下错误：\n';
-    recentFails.forEach(function(f){extra+='- 话题['+f.topic+']：'+f.mistake+'\n'});
+    var f=experienceMem.failures[experienceMem.failures.length-1];
+    extra+='\n【教训】'+f.mistake;
   }
-  if(experienceMem.successes.length>0){
-    var recentSuccess=experienceMem.successes.slice(-2);
-    extra+='\n【L5 成功经验】以下方式用户满意：\n';
-    recentSuccess.forEach(function(s){extra+='- 话题['+s.topic+']：'+s.approach+'\n'});
-  }
-
-  var sp=learnings.stylePrefs;
-  if(sp.detail)extra+='\n用户偏好'+sp.detail+'的回答风格';
-  if(sp.tone)extra+='，语气偏好：'+sp.tone;
-  if(sp.format)extra+='，格式偏好：'+sp.format;
 
   if(userText){
     var relevant=retrieveRelevantMemories(userText);
     if(relevant.length>0){
-      extra+='\n\n【上下文感知 - 相关记忆】\n';
-      relevant.forEach(function(r){
-        if(r.type==='profile')extra+='- 用户画像：'+r.key+'='+r.value+'\n';
-        else if(r.type==='memory')extra+='- 相关记忆：'+r.value+'\n';
-        else if(r.type==='success')extra+='- 成功经验：话题['+r.topic+']方式：'+r.approach+'\n';
-        else if(r.type==='failure')extra+='- 失败教训：话题['+r.topic+']问题：'+r.mistake+'\n';
-        else if(r.type==='emotion')extra+='- 当前情绪：'+r.emotion+'\n';
+      extra+='\n【相关记忆】';
+      relevant.slice(0,3).forEach(function(r){
+        if(r.type==='profile')extra+='- '+r.key+'='+r.value;
+        else if(r.type==='memory')extra+='- '+r.value;
+        else if(r.type==='success')extra+='- 成功：'+s.approach;
+        else if(r.type==='failure')extra+='- 避免：'+r.mistake;
       });
     }
   }
 
-  var topTopics=getTopTopics(3);
-  if(topTopics.length>0&&userText){
-    var userTopics=extractTopicsFromMsg(userText);
-    if(userTopics.length===0){
-      extra+='\n\n【智能推荐】用户经常关注的话题：'+topTopics.map(function(t){return t.name}).join('、')+'。如果合适，可以主动提及相关内容。';
-    }
-  }
-
-  // 知识库检索
+  // 知识库检索 - 限制数量和长度
   if(kbDocs.length>0 && userText){
     var kbResults=searchKB(userText);
     if(kbResults.length>0){
       extra += '\n\n【📚 知识库 - 相关文档】\n';
-      kbResults.forEach(function(r){
-        extra += '### '+r.doc.title+'\n'+r.doc.content.slice(0,800)+'\n\n';
+      kbResults.slice(0,2).forEach(function(r){
+        extra += '### '+r.doc.title+'\n'+r.doc.content.slice(0,400)+'\n\n';
       });
       extra += '（以上来自用户知识库，请基于这些内容回答问题）';
     }
@@ -3382,19 +3362,23 @@ function doLike(idx){
 }
 function doDislike(idx){fbTargetIdx=idx;$('fbModal').classList.add('show')}
 
-/* ===== 全新自动朗读系统（支持暂停/继续/停止） ===== */
+/* ===== 全新自动朗读系统（支持暂停/继续/停止，兼容WebView） ===== */
 var _readSynth=null;       // SpeechSynthesisUtterance
 var _readMsgIdx=-1;        // 当前朗读的消息索引
 var _readPaused=false;     // 是否暂停
 var _readQueue=[];         // 分段队列
 var _readSegIdx=0;         // 当前段落索引
 var _readAutoEnabled=true; // 自动朗读开关
+var _readAudioEl=null;     // API TTS音频元素（WebView回退）
+var _readUseApi=false;     // 是否使用API TTS模式
 
 // 初始化
 try{
   var _ar=localStorage.getItem('xlx_autoread');
   if(_ar!==null)_readAutoEnabled=_ar==='1';
 }catch(e){}
+// 检测是否支持浏览器内置语音（Android WebView通常不支持）
+_readUseApi = !('speechSynthesis' in window) || (typeof SpeechSynthesisUtterance === 'undefined');
 
 // 获取消息文本
 function _getMsgText(idx){
@@ -3422,16 +3406,68 @@ function startReading(idx){
   _readMsgIdx=idx;
   var text=_getMsgText(idx);
   if(!text||text.length<2)return;
-  if(!('speechSynthesis'in window)){toast('浏览器不支持语音朗读');return}
   // 清理非朗读内容
-  text=text.replace(/^---$/gm,'').replace(/^[💡📢⚠️✅❌🎬🎨📖]/gm,'').trim();
+  text=text.replace(/^---$/gm,'').replace(/^[💡📢⚠️✅❌🎬🎨📖]/gm,'').replace(/\*\*/g,'').trim();
   if(!text)return;
-  // 分段
-  _readQueue=_splitReadText(text,200);
-  _readSegIdx=0;
-  _readPaused=false;
-  _readNextSeg();
+  // 截断超长文本（API模式限制单次长度）
+  if(text.length>3000)text=text.substring(0,3000)+'...';
+  if(_readUseApi){
+    // WebView回退：使用DashScope TTS API
+    _startApiTts(text,idx);
+  }else{
+    // 浏览器内置语音
+    _readQueue=_splitReadText(text,200);
+    _readSegIdx=0;
+    _readPaused=false;
+    _readNextSeg();
+  }
   _updateReadMenu(idx,'playing');
+}
+
+// API TTS回退方案（用于Android WebView）
+function _startApiTts(text,idx){
+  var keys=getKeys();
+  var key=keys.qwen;
+  if(!key){
+    // 没有千问key，尝试用内置语音（可能有延迟支持）
+    _readUseApi=false;
+    if('speechSynthesis' in window){
+      _readQueue=_splitReadText(text,200);
+      _readSegIdx=0;_readPaused=false;
+      _readNextSeg();
+      _updateReadMenu(idx,'playing');
+    }else{
+      toast('请在设置中配置千问API Key以使用语音朗读');
+    }
+    return;
+  }
+  var voice='longanhuan';
+  var model='cosyvoice-v3-flash';
+  var payload={model:model,input:{text:text,voice:voice},parameters:{format:'mp3',sample_rate:24000,speech_rate:1.0,volume:0.8}};
+  fetch('https://dashscope.aliyuncs.com/api/v1/services/audio/tts/SpeechSynthesizer',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d.error){
+      toast('朗读失败: '+((d.error.message||'').substring(0,50)));
+      _finishReading();
+      return;
+    }
+    var audioUrl=(d.output&&d.output.audio&&d.output.audio.url)||(d.output&&d.output.audio_url);
+    if(!audioUrl){
+      toast('朗读未获取到音频');
+      _finishReading();
+      return;
+    }
+    _readAudioEl=new Audio(audioUrl);
+    _readAudioEl.onended=function(){_finishReading()};
+    _readAudioEl.onerror=function(){_finishReading()};
+    _readAudioEl.play().catch(function(){});
+  }).catch(function(e){
+    toast('朗读网络错误');
+    _finishReading();
+  });
 }
 
 function _splitReadText(text,maxLen){
@@ -3467,6 +3503,7 @@ function _readNextSeg(){
 // 暂停
 function pauseReading(){
   if(_readMsgIdx<0)return;
+  if(_readAudioEl){_readAudioEl.pause()}
   if(window.speechSynthesis)window.speechSynthesis.pause();
   _readPaused=true;
   _updateReadMenu(_readMsgIdx,'paused');
@@ -3475,6 +3512,7 @@ function pauseReading(){
 // 继续
 function resumeReading(){
   if(_readMsgIdx<0)return;
+  if(_readAudioEl){_readAudioEl.play().catch(function(){});_readPaused=false;_updateReadMenu(_readMsgIdx,'playing');return}
   if(window.speechSynthesis)window.speechSynthesis.resume();
   _readPaused=false;
   _updateReadMenu(_readMsgIdx,'playing');
@@ -3484,6 +3522,7 @@ function resumeReading(){
 // 停止
 function stopReading(){
   if(window.speechSynthesis)window.speechSynthesis.cancel();
+  if(_readAudioEl){try{_readAudioEl.pause();_readAudioEl=null}catch(e){}}
   _readSynth=null;
   var oldIdx=_readMsgIdx;
   _readMsgIdx=-1;
