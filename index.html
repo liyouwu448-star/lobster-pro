@@ -3729,7 +3729,11 @@ function _saveNovelStudio(){
 
 function openNovelStudio(){
   _initNovelStudio();
-  switchPage('Novel');
+  // 直接操作DOM显示页面（不调用switchPage避免递归）
+  document.querySelectorAll('.page').forEach(function(p){p.style.display='none'});
+  $('pageChat').style.display='none';
+  var pg=$('pageNovel');
+  if(pg){pg.style.display='flex';pg.classList.add('show')}
   novelRenderChapterList();
   if(_novelStudio.chapters.length===0){
     novelNewChapter();
