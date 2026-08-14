@@ -3855,7 +3855,7 @@ function novelReadChapter(){
 async function novelGenerateOutline(){
   _initNovelStudio();
   var keys=getKeys();
-  if(!keys.qwen&&!keys.silicon&&!keys.deepseek&&!keys.openai){
+  if(!keys.qwen&&!keys.siliconflow&&!keys.deepseek&&!keys.openai&&!keys.volcengine&&!keys.zhipu){
     toast('请先在设置中配置API密钥');switchPage('Settings');return;
   }
   var coreSetting=prompt('请输入核心设定（一句话描述）：\n例如：5岁孤儿得到混沌葫芦，修仙问鼎，10万字');
@@ -3909,7 +3909,7 @@ async function novelGenerateOutline(){
 async function novelAiContinue(){
   if(!_novelStudio||_nvCurChapter<0){toast('请先选择章节');return}
   var keys=getKeys();
-  if(!keys.qwen&&!keys.silicon&&!keys.deepseek&&!keys.openai){toast('请先配置API密钥');return}
+  if(!keys.qwen&&!keys.siliconflow&&!keys.deepseek&&!keys.openai&&!keys.volcengine&&!keys.zhipu){toast('请先配置API密钥');return}
   var ch=_novelStudio.chapters[_nvCurChapter];
   var req=$('nvAiReq')?$('nvAiReq').value:'';
   var prevContent=_nvCurChapter>0?_novelStudio.chapters[_nvCurChapter-1].content:'';
@@ -3993,33 +3993,30 @@ async function _nvUpdateMemory(newContent){
 // 调用LLM（复用龙虾Pro的API配置）
 async function _nvCallLLM(sysPrompt,userPrompt){
   var bp=findBP('novel',false);
-  if(!bp){
+  if(!bp||!bp.key){
     // 尝试所有已配置的平台
     var keys=getKeys();
-    if(keys.silicon)bp={prov:'silicon',key:keys.silicon,model:'deepseek-ai/DeepSeek-V3'};
-    else if(keys.qwen)bp={prov:'qwen',key:keys.qwen,model:'qwen-plus'};
-    else if(keys.deepseek)bp={prov:'deepseek',key:keys.deepseek,model:'deepseek-chat'};
-    else if(keys.openai)bp={prov:'openai',key:keys.openai,model:'gpt-4o-mini'};
-    else throw new Error('未配置API密钥');
+    if(keys.siliconflow)bp={prov:'siliconflow',model:'Qwen/Qwen3-8B',key:keys.siliconflow};
+    else if(keys.qwen)bp={prov:'qwen',model:'qwen-plus',key:keys.qwen};
+    else if(keys.deepseek)bp={prov:'deepseek',model:'deepseek-chat',key:keys.deepseek};
+    else if(keys.openai)bp={prov:'openai',model:'gpt-4o-mini',key:keys.openai};
+    else if(keys.volcengine)bp={prov:'volcengine_chat',model:'doubao-seed-1-6-flash-250828',key:keys.volcengine};
+    else if(keys.zhipu)bp={prov:'zhipu',model:'glm-4-flash',key:keys.zhipu};
+    else throw new Error('未配置API密钥，请在设置中配置');
   }
-  var config=LLM_PROVIDERS[bp.prov];
-  if(!config)throw new Error('未知平台：'+bp.prov);
-  var model=bp.model||config.defaultModel;
+  var url=AU[bp.prov]||AU.siliconflow;
   var headers={'Content-Type':'application/json'};
+  var body;
   if(bp.prov==='anthropic'){
     headers['x-api-key']=bp.key;
     headers['anthropic-version']='2023-06-01';
     headers['anthropic-dangerous-direct-browser-access']='true';
+    body={model:bp.model,max_tokens:8192,temperature:0.8,system:sysPrompt,messages:[{role:'user',content:userPrompt}]};
   }else{
     headers['Authorization']='Bearer '+bp.key;
+    body={model:bp.model,messages:[{role:'system',content:sysPrompt},{role:'user',content:userPrompt}],max_tokens:8192,temperature:0.8,stream:false};
   }
-  var body;
-  if(bp.prov==='anthropic'){
-    body={model:model,max_tokens:8192,temperature:0.8,system:sysPrompt,messages:[{role:'user',content:userPrompt}]};
-  }else{
-    body={model:model,max_tokens:8192,temperature:0.8,messages:[{role:'system',content:sysPrompt},{role:'user',content:userPrompt}]};
-  }
-  var resp=await fetch(config.base,{method:'POST',headers:headers,body:JSON.stringify(body)});
+  var resp=await fetch(url,{method:'POST',headers:headers,body:JSON.stringify(body)});
   if(!resp.ok){
     var t=await resp.text();
     throw new Error('HTTP '+resp.status+': '+t.substring(0,200));
@@ -4031,10 +4028,10 @@ async function _nvCallLLM(sysPrompt,userPrompt){
   }else if(data.content){
     content=data.content;
   }
-  // 安全转换
-  if(typeof content==='object'){
+  // 安全转换（防止[object Object]）
+  if(content&&typeof content==='object'){
     if(Array.isArray(content)){
-      content=content.map(function(c){return c.text||c.content||''}).join('');
+      content=content.map(function(c){return typeof c==='string'?c:(c.text||c.content||'')}).join('');
     }else{
       content=content.text||content.content||JSON.stringify(content);
     }
