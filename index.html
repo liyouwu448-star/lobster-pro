@@ -106,6 +106,12 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .wcard{background:var(--bg2);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:14px 10px;cursor:pointer;text-align:center;font-size:13px;transition:all .2s}
 .wcard:active{transform:scale(.95);background:var(--bg3)}
 .wcard .icon{font-size:28px;margin-bottom:6px}
+.nv-tab{padding:8px 16px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.nv-tab.active{color:var(--ink);border-bottom-color:var(--accent)}
+.nv-chapter-item{padding:8px 12px;cursor:pointer;border-left:3px solid transparent;transition:all .15s}
+.nv-chapter-item.active{background:var(--bg3);border-left-color:var(--accent)}
+.nv-chapter-item .nv-ch-title{font-size:12px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv-chapter-item .nv-ch-words{font-size:10px;color:var(--sub);margin-top:2px}
 .bnav{display:none}
 .drawer{position:absolute;left:0;top:0;bottom:0;width:260px;background:var(--bg2);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .3s ease;z-index:101}
 .modal-overlay.show .drawer{transform:translateX(0)}
@@ -372,7 +378,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div class="wcard" onclick="setMode('ops',this)"><div class="icon">📱</div>运营</div>
 <div class="wcard" onclick="setMode('clone',this);pickImg()"><div class="icon">🔄</div>复刻</div>
 <div class="wcard" onclick="setMode('file',this);pickFile()"><div class="icon">📂</div>文件</div>
-<div class="wcard" onclick="setMode('grade',this);pickImg()"><div class="icon">📋</div>批改</div><div class="wcard" onclick="setMode('img2prompt',this);pickGallery()"><div class="icon">📸</div>反推提示词</div><div class="wcard" onclick="setMode('img2img',this);pickGallery()"><div class="icon">🎨</div>图生图</div><div class="wcard" onclick="setMode('code',this)"><div class="icon">💻</div>编程</div></div></div></div>
+<div class="wcard" onclick="setMode('grade',this);pickImg()"><div class="icon">📋</div>批改</div><div class="wcard" onclick="setMode('img2prompt',this);pickGallery()"><div class="icon">📸</div>反推提示词</div><div class="wcard" onclick="setMode('img2img',this);pickGallery()"><div class="icon">🎨</div>图生图</div><div class="wcard" onclick="openNovelStudio()"><div class="icon">📖</div>写小说</div><div class="wcard" onclick="setMode('code',this)"><div class="icon">💻</div>编程</div></div></div></div>
     <div class="typing" id="typing"><div class="dots"><span></span><span></span><span></span></div><span>思考中...</span></div>
     <!-- v8.14 @ 技能弹窗（替代 v8.11 skill-trigger + skill-panel） -->
     <!-- 技能触发器已整合到 input-bar 的 @ 按钮 -->
@@ -440,7 +446,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="at-item" onclick="setMode('ops',null);closeAtPanel()"><span class="at-item-icon">💼</span>运营</div>
     <div class="at-item" onclick="setMode('file',null);closeAtPanel();pickFile()"><span class="at-item-icon">📤</span>文件</div>
     <div class="at-item" onclick="closeAtPanel();extractVideoLink()"><span class="at-item-icon">🔗</span>读视频链接</div>
-    <div class="at-item" onclick="setMode('novel',null);closeAtPanel();startNovelSkill()"><span class="at-item-icon">📖</span>写小说</div>
+    <div class="at-item" onclick="setMode('novel',null);closeAtPanel();openNovelStudio()"><span class="at-item-icon">📖</span>写小说</div>
     <div class="at-item" onclick="setMode('code',null);closeAtPanel()"><span class="at-item-icon">💻</span>编程</div>
   </div>
   <div class="at-panel-overlay" id="atPanelOverlay" onclick="closeAtPanel()"></div>
@@ -599,6 +605,82 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
     <div class="style-bar"><h4>偏好分析</h4><div id="styleInfo">暂无数据</div></div>
   </div>
+  <div class="page" id="pageNovel" style="display:none;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)">
+  <!-- 小说创作专业窗口 -->
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(128,128,128,.15);background:var(--bg2);flex-shrink:0">
+    <button class="btn" style="font-size:18px" onclick="backToChat()">←</button>
+    <span style="font-size:15px;font-weight:700;color:var(--ink);flex:1">📖 小说创作</span>
+    <span id="novelWordCount" style="font-size:12px;color:var(--sub)">0 字</span>
+    <button class="btn" style="font-size:13px;padding:4px 8px" onclick="novelNewChapter()">+章节</button>
+    <button class="btn" style="font-size:13px;padding:4px 8px" onclick="novelExport()">导出</button>
+    <button class="btn" style="font-size:13px;padding:4px 8px;background:var(--accent);color:#fff" onclick="novelGenerateOutline()">生成总纲</button>
+  </div>
+  <!-- 标签页 -->
+  <div style="display:flex;gap:0;border-bottom:1px solid rgba(128,128,128,.15);flex-shrink:0">
+    <div id="nvTabChapter" class="nv-tab active" onclick="novelSwitchTab('chapter')">章节创作</div>
+    <div id="nvTabOutline" class="nv-tab" onclick="novelSwitchTab('outline')">世界观与大纲</div>
+    <div id="nvTabMemory" class="nv-tab" onclick="novelSwitchTab('memory')">本章连续记忆</div>
+  </div>
+  <!-- 章节创作视图 -->
+  <div id="nvViewChapter" style="flex:1;display:flex;overflow:hidden">
+    <!-- 左栏：章节列表 -->
+    <div style="width:180px;border-right:1px solid rgba(128,128,128,.12);overflow-y:auto;flex-shrink:0;padding:8px 0" id="nvChapterList"></div>
+    <!-- 中栏：正文编辑 -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div style="padding:8px 12px;border-bottom:1px solid rgba(128,128,128,.1);display:flex;align-items:center;gap:8px">
+        <input id="nvChapterTitle" placeholder="第X章 章节标题" style="flex:1;background:transparent;border:none;color:var(--ink);font-size:14px;font-weight:600;outline:none">
+        <span id="nvChapterWordCount" style="font-size:11px;color:var(--sub)">0字</span>
+      </div>
+      <textarea id="nvEditor" placeholder="在这里写正文..." oninput="novelOnEdit()" style="flex:1;width:100%;background:var(--bg);border:none;padding:12px 16px;color:var(--ink);font-size:14px;line-height:1.8;resize:none;outline:none;font-family:inherit"></textarea>
+      <div style="padding:4px 12px;border-top:1px solid rgba(128,128,128,.1);display:flex;gap:6px;flex-shrink:0">
+        <button class="btn" style="font-size:12px;padding:4px 8px" onclick="novelReadChapter()">🔊 朗读</button>
+        <button class="btn" style="font-size:12px;padding:4px 8px" onclick="pauseReading()">⏸</button>
+        <button class="btn" style="font-size:12px;padding:4px 8px" onclick="resumeReading()">▶</button>
+        <button class="btn" style="font-size:12px;padding:4px 8px" onclick="stopReading()">⏹</button>
+      </div>
+    </div>
+    <!-- 右栏：AI辅助 -->
+    <div style="width:260px;border-left:1px solid rgba(128,128,128,.12);overflow-y:auto;flex-shrink:0;padding:12px">
+      <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px">✦ 长篇小说智能助手</div>
+      <div style="font-size:11px;color:var(--sub);margin-bottom:10px">读取总纲、卷纲、最近章节、人物状态，以拟定的风格续写</div>
+      <textarea id="nvAiReq" placeholder="例如：本章3000字，加强追逐戏，结尾揭露反派身份..." style="width:100%;height:80px;background:var(--bg3);border:1px solid rgba(128,128,128,.2);border-radius:8px;padding:8px;color:var(--ink);font-size:12px;resize:none;outline:none;margin-bottom:8px"></textarea>
+      <button class="btn" style="width:100%;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:6px" onclick="novelAiContinue()">✦ 智能续写并更新记忆</button>
+      <button class="btn" style="width:100%;padding:6px;border:1px solid rgba(128,128,128,.3);border-radius:8px;font-size:12px;margin-bottom:6px" onclick="novelAiRewrite()">重写本章</button>
+      <button class="btn" style="width:100%;padding:6px;border:1px solid rgba(128,128,128,.3);border-radius:8px;font-size:12px;margin-bottom:10px" onclick="novelAiPolish()">文字润色</button>
+      <div style="border-top:1px solid rgba(128,128,128,.15);padding-top:10px">
+        <div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px">📊 创作统计</div>
+        <div id="nvStats" style="font-size:11px;color:var(--sub);line-height:1.8"></div>
+      </div>
+    </div>
+  </div>
+  <!-- 世界观与大纲视图 -->
+  <div id="nvViewOutline" style="flex:1;overflow-y:auto;padding:12px;display:none">
+    <div style="display:flex;gap:12px;margin-bottom:12px">
+      <div style="flex:1">
+        <label style="font-size:12px;font-weight:600;color:var(--ink)">🌍 世界观</label>
+        <textarea id="nvWorldview" placeholder="AI生成或手动输入世界观..." style="width:100%;height:120px;background:var(--bg3);border:1px solid rgba(128,128,128,.2);border-radius:8px;padding:8px;color:var(--ink);font-size:12px;resize:vertical;outline:none;margin-top:4px" oninput="novelSaveField('worldview',this.value)"></textarea>
+      </div>
+      <div style="flex:1">
+        <label style="font-size:12px;font-weight:600;color:var(--ink)">👥 人物关系</label>
+        <textarea id="nvCharacters" placeholder="AI生成或手动输入角色设定..." style="width:100%;height:120px;background:var(--bg3);border:1px solid rgba(128,128,128,.2);border-radius:8px;padding:8px;color:var(--ink);font-size:12px;resize:vertical;outline:none;margin-top:4px" oninput="novelSaveField('characters',this.value)"></textarea>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;font-weight:600;color:var(--ink)">📋 故事总纲</label>
+      <textarea id="nvOutline" placeholder="AI生成或手动输入故事大纲..." style="width:100%;height:160px;background:var(--bg3);border:1px solid rgba(128,128,128,.2);border-radius:8px;padding:8px;color:var(--ink);font-size:12px;resize:vertical;outline:none;margin-top:4px" oninput="novelSaveField('outline',this.value)"></textarea>
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:600;color:var(--ink)">📚 分卷规划</label>
+      <textarea id="nvVolumes" placeholder="AI生成或手动输入分卷规划..." style="width:100%;height:160px;background:var(--bg3);border:1px solid rgba(128,128,128,.2);border-radius:8px;padding:8px;color:var(--ink);font-size:12px;resize:vertical;outline:none;margin-top:4px" oninput="novelSaveField('volumes',this.value)"></textarea>
+    </div>
+  </div>
+  <!-- 本章连续记忆视图 -->
+  <div id="nvViewMemory" style="flex:1;overflow-y:auto;padding:12px;display:none">
+    <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px">🧠 本章连续记忆</div>
+    <div style="font-size:11px;color:var(--sub);margin-bottom:10px">AI写作时自动维护的上下文记忆，包含人物状态、伏笔追踪、时间线等</div>
+    <textarea id="nvMemory" placeholder="暂无记忆数据，AI续写后自动生成..." style="width:100%;min-height:300px;background:var(--bg3);border:1px solid rgba(128,128,128,.2);border-radius:8px;padding:10px;color:var(--ink);font-size:13px;line-height:1.8;resize:vertical;outline:none" oninput="novelSaveField('memory',this.value)"></textarea>
+  </div>
+</div>
   <div class="page" id="pageKB">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button class="btn" style="font-size:18px" onclick="backToChat()">←</button><h3 style="margin:0">📚 知识库</h3></div>
   <div class="s-section">
@@ -3611,6 +3693,355 @@ function _updateReadMenu(idx,state){
   }
 }
 
+/* ===== 小说创作专业窗口 ===== */
+var _novelStudio=null;
+var _nvCurChapter=-1;
+
+function _initNovelStudio(){
+  if(_novelStudio)return _novelStudio;
+  try{
+    var s=localStorage.getItem('xlx_novel_studio');
+    if(s)_novelStudio=JSON.parse(s);
+  }catch(e){}
+  if(!_novelStudio||!_novelStudio.chapters){
+    _novelStudio={
+      title:'新建小说',
+      genre:'',
+      targetWords:300000,
+      chapters:[],
+      worldview:'',
+      characters:'',
+      outline:'',
+      volumes:'',
+      memory:'',
+      curChapterIdx:-1
+    };
+  }
+  return _novelStudio;
+}
+
+function _saveNovelStudio(){
+  try{
+    if(_novelStudio)_novelStudio.curChapterIdx=_nvCurChapter;
+    localStorage.setItem('xlx_novel_studio',JSON.stringify(_novelStudio));
+  }catch(e){}
+}
+
+function openNovelStudio(){
+  _initNovelStudio();
+  switchPage('Novel');
+  novelRenderChapterList();
+  if(_novelStudio.chapters.length===0){
+    novelNewChapter();
+  }else{
+    _nvCurChapter=_novelStudio.curChapterIdx>=0?_novelStudio.curChapterIdx:0;
+    novelLoadChapter(_nvCurChapter);
+  }
+  novelLoadOutlineFields();
+  novelUpdateStats();
+}
+
+function novelSwitchTab(tab){
+  $('nvTabChapter').classList.toggle('active',tab==='chapter');
+  $('nvTabOutline').classList.toggle('active',tab==='outline');
+  $('nvTabMemory').classList.toggle('active',tab==='memory');
+  $('nvViewChapter').style.display=tab==='chapter'?'flex':'none';
+  $('nvViewOutline').style.display=tab==='outline'?'block':'none';
+  $('nvViewMemory').style.display=tab==='memory'?'block':'none';
+}
+
+function novelRenderChapterList(){
+  var el=$('nvChapterList');
+  if(!el||!_novelStudio)return;
+  el.innerHTML='';
+  if(_novelStudio.chapters.length===0){
+    el.innerHTML='<div style="padding:12px;font-size:12px;color:var(--sub);text-align:center">暂无章节<br>点击上方+章节</div>';
+    return;
+  }
+  _novelStudio.chapters.forEach(function(ch,i){
+    var div=document.createElement('div');
+    div.className='nv-chapter-item'+(i===_nvCurChapter?' active':'');
+    var wc=(ch.content||'').length;
+    div.innerHTML='<div class="nv-ch-title">'+(ch.title||('第'+(i+1)+'章'))+'</div><div class="nv-ch-words">'+wc+'字</div>';
+    div.onclick=function(){novelLoadChapter(i)};
+    el.appendChild(div);
+  });
+}
+
+function novelLoadChapter(idx){
+  if(!_novelStudio||idx<0||idx>=_novelStudio.chapters.length)return;
+  _nvCurChapter=idx;
+  var ch=_novelStudio.chapters[idx];
+  if($('nvChapterTitle'))$('nvChapterTitle').value=ch.title||'';
+  if($('nvEditor'))$('nvEditor').value=ch.content||'';
+  if($('nvChapterWordCount'))$('nvChapterWordCount').textContent=(ch.content||'').length+'字';
+  novelRenderChapterList();
+  _saveNovelStudio();
+}
+
+function novelNewChapter(){
+  _initNovelStudio();
+  _novelStudio.chapters.push({title:'第'+(_novelStudio.chapters.length+1)+'章',content:''});
+  _nvCurChapter=_novelStudio.chapters.length-1;
+  novelLoadChapter(_nvCurChapter);
+  _saveNovelStudio();
+}
+
+function novelOnEdit(){
+  if(!_novelStudio||_nvCurChapter<0)return;
+  var ch=_novelStudio.chapters[_nvCurChapter];
+  ch.title=$('nvChapterTitle').value;
+  ch.content=$('nvEditor').value;
+  $('nvChapterWordCount').textContent=ch.content.length+'字';
+  novelUpdateStats();
+  _saveNovelStudio();
+}
+
+function novelSaveField(field,val){
+  if(!_novelStudio)return;
+  _novelStudio[field]=val;
+  _saveNovelStudio();
+}
+
+function novelLoadOutlineFields(){
+  if(!_novelStudio)return;
+  if($('nvWorldview'))$('nvWorldview').value=_novelStudio.worldview||'';
+  if($('nvCharacters'))$('nvCharacters').value=_novelStudio.characters||'';
+  if($('nvOutline'))$('nvOutline').value=_novelStudio.outline||'';
+  if($('nvVolumes'))$('nvVolumes').value=_novelStudio.volumes||'';
+  if($('nvMemory'))$('nvMemory').value=_novelStudio.memory||'';
+}
+
+function novelUpdateStats(){
+  if(!_novelStudio)return;
+  var total=0;
+  _novelStudio.chapters.forEach(function(ch){total+=(ch.content||'').length});
+  if($('novelWordCount'))$('novelWordCount').textContent=total+' 字';
+  if($('nvStats')){
+    $('nvStats').innerHTML='总字数：'+total+'<br>目标：'+(_novelStudio.targetWords||0)+'字<br>章节：'+_novelStudio.chapters.length+'章<br>进度：'+(total/(_novelStudio.targetWords||1)*100).toFixed(1)+'%';
+  }
+}
+
+function novelExport(){
+  if(!_novelStudio||_novelStudio.chapters.length===0){toast('暂无内容');return}
+  var txt=_novelStudio.title+'\n\n';
+  if(_novelStudio.worldview)txt+='【世界观】\n'+_novelStudio.worldview+'\n\n';
+  if(_novelStudio.characters)txt+='【人物关系】\n'+_novelStudio.characters+'\n\n';
+  if(_novelStudio.outline)txt+='【故事总纲】\n'+_novelStudio.outline+'\n\n';
+  txt+='==========\n\n';
+  _novelStudio.chapters.forEach(function(ch,i){
+    txt+=(ch.title||('第'+(i+1)+'章'))+'\n\n'+(ch.content||'')+'\n\n';
+  });
+  var blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(_novelStudio.title||'小说')+'.txt';
+  a.click();
+}
+
+function novelReadChapter(){
+  if(!_novelStudio||_nvCurChapter<0)return;
+  var ch=_novelStudio.chapters[_nvCurChapter];
+  if(!ch||!ch.content){toast('本章无内容');return}
+  // 使用自动朗读系统
+  var fakeIdx=_novelStudio.chapters.length+100;
+  var c=getCurConv();
+  if(!c){c={id:'novel_'+Date.now(),title:'novel',msgs:[]};convs.push(c);curCid=c.id}
+  c.msgs[fakeIdx]={role:'ai',content:ch.title+'\n\n'+ch.content};
+  startReading(fakeIdx);
+}
+
+// AI生成总纲
+async function novelGenerateOutline(){
+  _initNovelStudio();
+  var keys=getKeys();
+  if(!keys.qwen&&!keys.silicon&&!keys.deepseek&&!keys.openai){
+    toast('请先在设置中配置API密钥');switchPage('Settings');return;
+  }
+  var coreSetting=prompt('请输入核心设定（一句话描述）：\n例如：5岁孤儿得到混沌葫芦，修仙问鼎，10万字');
+  if(!coreSetting)return;
+  var genre=prompt('题材类型（如：修仙玄幻/都市/科幻/悬疑/言情）：','修仙玄幻');
+  if(!genre)genre='修仙玄幻';
+  var wordCount=prompt('预计总字数（如：100000/300000/1000000）：','300000');
+  if(!wordCount)wordCount='300000';
+  _novelStudio.title=prompt('小说标题：','未命名小说')||'未命名小说';
+  _novelStudio.genre=genre;
+  _novelStudio.targetWords=parseInt(wordCount)||300000;
+  toast('正在生成总纲...');
+  var sysPrompt='你是一位专业小说策划。请根据以下设定，生成完整的小说总纲。\n\n核心设定：'+coreSetting+'\n题材：'+genre+'\n预计字数：'+wordCount+'字\n\n请按以下格式输出：\n\n===世界观===\n[200-400字的世界观设定]\n\n===人物关系===\n[主要角色及其关系，每个角色50-100字]\n\n===故事总纲===\n[500-800字的故事大纲，包含起承转合]\n\n===分卷规划===\n[每卷的标题和主要内容概述]';
+  try{
+    var result=await _nvCallLLM(sysPrompt,'请生成小说总纲');
+    if(!result){toast('生成失败，请检查API密钥');return}
+    // 解析分段
+    var m;
+    if(m=result.match(/===世界观===[\s\S]*?(?====|$)/i)){
+      _novelStudio.worldview=m[0].replace(/===世界观===/i,'').trim();
+    }else if(m=result.match(/世界观[：:][\s\S]*?(?=人物|故事|分卷|$)/i)){
+      _novelStudio.worldview=m[0].replace(/世界观[：:]/i,'').trim();
+    }else{
+      _novelStudio.worldview=result.substring(0,500);
+    }
+    if(m=result.match(/===人物关系===[\s\S]*?(?====|$)/i)){
+      _novelStudio.characters=m[0].replace(/===人物关系===/i,'').trim();
+    }else if(m=result.match(/人物[关系：:][\s\S]*?(?=故事|分卷|$)/i)){
+      _novelStudio.characters=m[0].replace(/人物[关系：:]/i,'').trim();
+    }
+    if(m=result.match(/===故事总纲===[\s\S]*?(?====|$)/i)){
+      _novelStudio.outline=m[0].replace(/===故事总纲===/i,'').trim();
+    }else if(m=result.match(/故事[总纲：:][\s\S]*?(?=分卷|$)/i)){
+      _novelStudio.outline=m[0].replace(/故事[总纲：:]/i,'').trim();
+    }
+    if(m=result.match(/===分卷规划===[\s\S]*?(?====|$)/i)){
+      _novelStudio.volumes=m[0].replace(/===分卷规划===/i,'').trim();
+    }else if(m=result.match(/分卷[规划：:][\s\S]*$/i)){
+      _novelStudio.volumes=m[0].replace(/分卷[规划：:]/i,'').trim();
+    }
+    novelLoadOutlineFields();
+    _saveNovelStudio();
+    toast('总纲生成完成！');
+    novelSwitchTab('outline');
+  }catch(e){
+    toast('生成失败：'+e.message);
+  }
+}
+
+// AI续写
+async function novelAiContinue(){
+  if(!_novelStudio||_nvCurChapter<0){toast('请先选择章节');return}
+  var keys=getKeys();
+  if(!keys.qwen&&!keys.silicon&&!keys.deepseek&&!keys.openai){toast('请先配置API密钥');return}
+  var ch=_novelStudio.chapters[_nvCurChapter];
+  var req=$('nvAiReq')?$('nvAiReq').value:'';
+  var prevContent=_nvCurChapter>0?_novelStudio.chapters[_nvCurChapter-1].content:'';
+  var sysPrompt='你是一位专业小说写手，擅长'+(_novelStudio.genre||'玄幻')+'题材。\n\n';
+  if(_novelStudio.worldview)sysPrompt+='【世界观】'+_novelStudio.worldview+'\n\n';
+  if(_novelStudio.characters)sysPrompt+='【人物关系】'+_novelStudio.characters+'\n\n';
+  if(_novelStudio.outline)sysPrompt+='【故事总纲】'+_novelStudio.outline+'\n\n';
+  if(_novelStudio.volumes)sysPrompt+='【分卷规划】'+_novelStudio.volumes+'\n\n';
+  if(_novelStudio.memory)sysPrompt+='【连续记忆】'+_novelStudio.memory+'\n\n';
+  if(prevContent)sysPrompt+='【上一章结尾】...'+prevContent.slice(-500)+'\n\n';
+  sysPrompt+='【当前章节标题】'+ch.title+'\n';
+  sysPrompt+='【当前章节已有内容】\n'+(ch.content||'（本章开头）')+'\n\n';
+  sysPrompt+='请续写本章后续内容';
+  if(req)sysPrompt+='，要求：'+req;
+  sysPrompt+='。续写内容约1500-3000字，保持风格统一，推进剧情。直接输出正文，不要加解释说明。';
+  toast('AI续写中...');
+  try{
+    var result=await _nvCallLLM(sysPrompt,'续写小说章节');
+    if(!result){toast('续写失败');return}
+    ch.content=(ch.content||'')+'\n'+result;
+    if($('nvEditor'))$('nvEditor').value=ch.content;
+    if($('nvChapterWordCount'))$('nvChapterWordCount').textContent=ch.content.length+'字';
+    // AI更新记忆
+    _nvUpdateMemory(result);
+    novelUpdateStats();
+    novelRenderChapterList();
+    _saveNovelStudio();
+    toast('续写完成！+'+result.length+'字');
+  }catch(e){toast('续写失败：'+e.message)}
+}
+
+// AI重写本章
+async function novelAiRewrite(){
+  if(!_novelStudio||_nvCurChapter<0){toast('请先选择章节');return}
+  var ch=_novelStudio.chapters[_nvCurChapter];
+  if(!ch.content){toast('本章无内容');return}
+  if(!confirm('确定要重写本章吗？当前内容将被替换。'))return;
+  var sysPrompt='你是一位专业小说写手。请重写以下章节内容，保持核心剧情不变，优化文笔和节奏。\n\n章节标题：'+ch.title+'\n原内容：\n'+ch.content;
+  toast('AI重写中...');
+  try{
+    var result=await _nvCallLLM(sysPrompt,'重写章节');
+    if(!result){toast('重写失败');return}
+    ch.content=result;
+    if($('nvEditor'))$('nvEditor').value=ch.content;
+    if($('nvChapterWordCount'))$('nvChapterWordCount').textContent=ch.content.length+'字';
+    novelUpdateStats();
+    _saveNovelStudio();
+    toast('重写完成！');
+  }catch(e){toast('重写失败：'+e.message)}
+}
+
+// AI润色
+async function novelAiPolish(){
+  if(!_novelStudio||_nvCurChapter<0){toast('请先选择章节');return}
+  var ch=_novelStudio.chapters[_nvCurChapter];
+  if(!ch.content){toast('本章无内容');return}
+  var sysPrompt='请对以下文字进行润色优化，提升文笔质量，保持原意不变。直接输出润色后的全文。\n\n'+ch.content;
+  toast('AI润色中...');
+  try{
+    var result=await _nvCallLLM(sysPrompt,'润色文字');
+    if(!result){toast('润色失败');return}
+    ch.content=result;
+    if($('nvEditor'))$('nvEditor').value=ch.content;
+    if($('nvChapterWordCount'))$('nvChapterWordCount').textContent=ch.content.length+'字';
+    novelUpdateStats();
+    _saveNovelStudio();
+    toast('润色完成！');
+  }catch(e){toast('润色失败：'+e.message)}
+}
+
+// 更新连续记忆
+async function _nvUpdateMemory(newContent){
+  if(!_novelStudio)return;
+  // 简单记忆：提取关键信息
+  var oldMemory=_novelStudio.memory||'';
+  var summary='第'+(_nvCurChapter+1)+'章新增'+newContent.length+'字';
+  _novelStudio.memory=oldMemory+'\n'+summary;
+  if($('nvMemory'))$('nvMemory').value=_novelStudio.memory;
+}
+
+// 调用LLM（复用龙虾Pro的API配置）
+async function _nvCallLLM(sysPrompt,userPrompt){
+  var bp=findBP('novel',false);
+  if(!bp){
+    // 尝试所有已配置的平台
+    var keys=getKeys();
+    if(keys.silicon)bp={prov:'silicon',key:keys.silicon,model:'deepseek-ai/DeepSeek-V3'};
+    else if(keys.qwen)bp={prov:'qwen',key:keys.qwen,model:'qwen-plus'};
+    else if(keys.deepseek)bp={prov:'deepseek',key:keys.deepseek,model:'deepseek-chat'};
+    else if(keys.openai)bp={prov:'openai',key:keys.openai,model:'gpt-4o-mini'};
+    else throw new Error('未配置API密钥');
+  }
+  var config=LLM_PROVIDERS[bp.prov];
+  if(!config)throw new Error('未知平台：'+bp.prov);
+  var model=bp.model||config.defaultModel;
+  var headers={'Content-Type':'application/json'};
+  if(bp.prov==='anthropic'){
+    headers['x-api-key']=bp.key;
+    headers['anthropic-version']='2023-06-01';
+    headers['anthropic-dangerous-direct-browser-access']='true';
+  }else{
+    headers['Authorization']='Bearer '+bp.key;
+  }
+  var body;
+  if(bp.prov==='anthropic'){
+    body={model:model,max_tokens:8192,temperature:0.8,system:sysPrompt,messages:[{role:'user',content:userPrompt}]};
+  }else{
+    body={model:model,max_tokens:8192,temperature:0.8,messages:[{role:'system',content:sysPrompt},{role:'user',content:userPrompt}]};
+  }
+  var resp=await fetch(config.base,{method:'POST',headers:headers,body:JSON.stringify(body)});
+  if(!resp.ok){
+    var t=await resp.text();
+    throw new Error('HTTP '+resp.status+': '+t.substring(0,200));
+  }
+  var data=await resp.json();
+  var content='';
+  if(data.choices&&data.choices[0]&&data.choices[0].message){
+    content=data.choices[0].message.content;
+  }else if(data.content){
+    content=data.content;
+  }
+  // 安全转换
+  if(typeof content==='object'){
+    if(Array.isArray(content)){
+      content=content.map(function(c){return c.text||c.content||''}).join('');
+    }else{
+      content=content.text||content.content||JSON.stringify(content);
+    }
+  }
+  return content||'';
+}
+
 /* ===== 写小说技能（多智能体协作·支持暂停/继续） ===== */
 var _novelProject=null;
 var _novelRunning=false;
@@ -4183,6 +4614,7 @@ function switchPage(name,el){
   if(name==='Learning')updateLearning();
   if(name==='KB'){var pg=$('pageKB');if(pg){pg.style.display='block';pg.classList.add('show');renderKBList()}}
   if(name==='Chat')setTimeout(scrollBottom,100);
+  if(name==='Novel')openNovelStudio();
 }
 
 /* ===== 数据导出/清除 ===== */
